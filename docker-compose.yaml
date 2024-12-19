@@ -1,0 +1,23 @@
+services:
+  app:
+    build: .
+    ports:
+      - "8000:8000"
+    volumes:
+      - .:/app
+    environment:
+      MONGODB_CONNECTION_STRING: mongodb://mongo:27017/school_db
+      ORACLE_BUCKET_NAME: students-photos
+      ORACLE_NAMESPACE: grclu1pmcg1e
+    depends_on:
+      - mongo
+
+  mongo:
+    image: mongo:5.0
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo-data:/data/db
+
+volumes:
+  mongo-data:
