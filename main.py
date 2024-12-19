@@ -1,5 +1,4 @@
-
-from fastapi import FastAPI, UploadFile, File, HTTPException, Request
+from fastapi import FastAPI, UploadFile, File, HTTPException
 from pymongo import MongoClient
 from bson import ObjectId
 import oci
@@ -12,7 +11,6 @@ load_dotenv()
 
 # FastAPI app
 app = FastAPI()
-
 
 # MongoDB configuration
 mongo_uri = os.getenv("MONGODB_CONNECTION_STRING")
@@ -29,7 +27,7 @@ bucket_name = os.getenv("ORACLE_BUCKET_NAME")
 region = config["region"]
 
 """
-Test api via swagger using url/docs
+Test API via Swagger using /docs
 """
 
 @app.post("/students/")
@@ -40,7 +38,7 @@ async def create_student(name: str, grade: float, photo: UploadFile = File(...))
     Args:
         name (str): Name of the student (MongoDB)
         grade (float): The grade of the student (MongoDB)
-        photo (UploadFile): The photo  (Oracle Bucket)
+        photo (UploadFile): The photo (Oracle Bucket)
     """
     try:
         # Read the photo content
@@ -65,9 +63,7 @@ async def create_student(name: str, grade: float, photo: UploadFile = File(...))
         return {**student.model_dump(), "_id": str(result.inserted_id)}
 
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Erro ao criar estudante: {str(e)}")
-
-
+        raise HTTPException(status_code=500, detail=f"Error creating student: {str(e)}")
 
 @app.get("/students/{student_id}")
 async def get_student(student_id: str):
@@ -79,14 +75,12 @@ async def get_student(student_id: str):
     try:
         student = db.students.find_one({"_id": ObjectId(student_id)})
         if not student:
-            raise HTTPException(status_code=404, detail="Estudante não encontrado")
+            raise HTTPException(status_code=404, detail="Student not found")
 
         return {**student, "_id": str(student["_id"])}
 
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Erro ao recuperar estudante: {str(e)}")
-
-
+        raise HTTPException(status_code=500, detail=f"Error retrieving student: {str(e)}")
 
 @app.get("/students/")
 async def list_students():
@@ -94,17 +88,14 @@ async def list_students():
     List all students in the database.
 
     Returns:
-
-        student object
+        List of student objects
     """
     try:
         students = list(db.students.find())
         return [{**student, "_id": str(student["_id"])} for student in students]
 
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Erro ao listar estudantes: {str(e)}")
-
-
+        raise HTTPException(status_code=500, detail=f"Error listing students: {str(e)}")
 
 @app.put("/students/{student_id}")
 async def update_student(student_id: str, student_data: Student):
@@ -118,14 +109,12 @@ async def update_student(student_id: str, student_data: Student):
         )
 
         if result.matched_count == 0:
-            raise HTTPException(status_code=404, detail="Estudante não encontrado")
+            raise HTTPException(status_code=404, detail="Student not found")
 
         return student_data
 
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Erro ao atualizar estudante: {str(e)}")
-
-
+        raise HTTPException(status_code=500, detail=f"Error updating student: {str(e)}")
 
 @app.delete("/students/{student_id}")
 async def delete_student(student_id: str):
@@ -136,9 +125,14 @@ async def delete_student(student_id: str):
         result = db.students.delete_one({"_id": ObjectId(student_id)})
 
         if result.deleted_count == 0:
-            raise HTTPException(status_code=404, detail="Estudante não encontrado")
+            raise HTTPException(status_code=404, detail="Student not found")
 
-        return {"message": "Estudante deletado com sucesso"}
+        return {"message": "Student deleted successfully"}
 
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Erro ao deletar estudante: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Error deleting student: {str(e)}")
+
+if __name__ == "__main__":
+    import uvicorn
+
+    uvicorn.run("main:app", host="0.0.0.0", port=8000)
